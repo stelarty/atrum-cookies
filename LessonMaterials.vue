@@ -4,7 +4,10 @@ import { ref, computed } from 'vue'
 const text = ref('')
 const saved = ref(false)
 
-const links = computed(() => {
+const fullUrlRe = /^https?:\/\/\S+$/
+const inlineUrlRe = /https?:\/\/\S+/g
+
+const blocks = computed(() => {
   const lines = text.value.split('\n')
   const result = []
 
@@ -12,29 +15,46 @@ const links = computed(() => {
     const line = lines[i].trim()
     if (!line) continue
 
-    if (/^https?:\/\/\S+$/.test(line)) {
+    if (fullUrlRe.test(line)) {
       const prev = i > 0 ? lines[i - 1].trim() : ''
-      const label = prev && !/^https?:\/\//.test(prev)
-        ? prev.toUpperCase()
-        : extractDomain(line)
-      result.push({ label, url: line })
+      const label = prev && !fullUrlRe.test(prev) ? prev.toUpperCase() : null
+      result.push({ type: 'link', label, url: line })
+    } else {
+      const next = i + 1 < lines.length ? lines[i + 1].trim() : ''
+      if (fullUrlRe.test(next)) continue
+
+      // detect inline URLs within the line
+      inlineUrlRe.lastIndex = 0
+      const segments = []
+      let lastIndex = 0
+      let match
+      while ((match = inlineUrlRe.exec(line)) !== null) {
+        if (match.index > lastIndex) {
+          segments.push({ type: 'text', content: line.slice(lastIndex, match.index) })
+        }
+        segments.push({ type: 'url', href: match[0] })
+        lastIndex = match.index + match[0].length
+      }
+      if (lastIndex < line.length) {
+        segments.push({ type: 'text', content: line.slice(lastIndex) })
+      }
+
+      if (segments.some(s => s.type === 'url')) {
+        result.push({ type: 'mixed', segments })
+      } else {
+        result.push({ type: 'text', content: line })
+      }
     }
   }
   return result
 })
 
-function extractDomain(url) {
-  try { return new URL(url).hostname.toUpperCase() }
-  catch { return 'ССЫЛКА' }
-}
-
 function save() {
-  if (links.value.length) saved.value = true
+  if (text.value.trim()) saved.value = true
 }
 
 function reset() {
   saved.value = false
-  text.value = ''
 }
 </script>
 
@@ -48,17 +68,24 @@ function reset() {
     <Transition name="slide" mode="out-in">
 
       <!-- View mode -->
-      <ul v-if="saved" key="view" class="link-list">
-        <li v-for="(item, i) in links" :key="i" class="link-item">
-          <span class="link-item__label">{{ item.label }}</span>
-          <a :href="item.url" class="link-item__url" target="_blank" rel="noopener">
-            {{ item.url }}
-          </a>
-        </li>
-        <li>
-          <button class="card__edit-btn" @click="reset">Редактировать</button>
-        </li>
-      </ul>
+      <div v-if="saved" key="view" class="view-area">
+        <template v-for="(block, i) in blocks" :key="i">
+          <p v-if="block.type === 'text'" class="view-text">{{ block.content }}</p>
+          <p v-else-if="block.type === 'mixed'" class="view-text">
+            <template v-for="(seg, j) in block.segments" :key="j">
+              <a v-if="seg.type === 'url'" :href="seg.href" class="inline-link" target="_blank" rel="noopener">{{ seg.href }}</a>
+              <span v-else>{{ seg.content }}</span>
+            </template>
+          </p>
+          <div v-else class="link-item">
+            <span v-if="block.label" class="link-item__label">{{ block.label }}</span>
+            <a :href="block.url" class="link-item__url" target="_blank" rel="noopener">
+              {{ block.url }}
+            </a>
+          </div>
+        </template>
+        <button class="card__edit-btn" @click="reset">Редактировать</button>
+      </div>
 
       <!-- Edit mode -->
       <div v-else key="edit" class="edit-area">
@@ -69,7 +96,7 @@ function reset() {
         />
         <button
           class="card__save-btn"
-          :disabled="!links.length"
+          :disabled="!text.trim()"
           @click="save"
         >
           Сохранить
@@ -172,14 +199,28 @@ function reset() {
   cursor: default;
 }
 
-/* Link list */
-.link-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* View mode */
+.view-area {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.view-text {
+  font-size: 13px;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.inline-link {
+  color: #606fff;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.inline-link:hover {
+  text-decoration: none;
 }
 
 .link-item {
