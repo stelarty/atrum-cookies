@@ -9,14 +9,15 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      min-height: 100vh;
       font-family: 'Onest', sans-serif;
-      overflow: hidden;
+      background-color: #f1f1f3;
+      overflow-x: hidden;
     }
     .bg {
-      position: fixed;
-      inset: 0;
-      background: url('/bg.png') center center / cover no-repeat;
+      display: block;
+      width: 1366px;
+      height: auto;
+      margin: 0 auto;
       animation: bgFadeIn 0.9s ease both;
     }
     @keyframes bgFadeIn {
@@ -26,7 +27,7 @@
   </style>
 </head>
 <body>
-  <div class="bg"></div>
+  <img class="bg" src="/bg.png" alt="" width="1366" height="967" />
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
 </body>

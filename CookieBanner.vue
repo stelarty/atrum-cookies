@@ -17,7 +17,7 @@ function close() {
     <div v-if="visible" class="cookie-wrapper">
       <div class="cookie-bar">
         <p class="cookie-bar__text">
-          Мы используем <span class="cookie-bar__accent">cookies</span>, чтобы сайт был лучше
+          Мы используем <span class="cookie-bar__accent">cookies</span>, чтобы сайт работал лучше
         </p>
 
         <img
@@ -43,12 +43,12 @@ function close() {
 
 .cookie-wrapper {
   position: fixed;
-  bottom: 8px;
+  bottom: 0;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
-  padding: 0 8px;
+  padding: 0;
   z-index: 9999;
   pointer-events: none;
 }
@@ -59,10 +59,10 @@ function close() {
   justify-content: center;
   gap: 22px;
   width: 100%;
-  max-width: 1350px;
+  max-width: 100%;
   height: 46px;
   background: #282931;
-  border-radius: 12px;
+  border-radius: 0;
   overflow: visible;
   pointer-events: all;
 }
@@ -118,10 +118,13 @@ function close() {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.cookie-enter-from,
-.cookie-leave-to {
+.cookie-enter-from {
   opacity: 0;
   transform: translateY(16px);
   filter: blur(8px);
+}
+.cookie-leave-to {
+  opacity: 0;
+  transform: translateY(16px);
 }
 </style>
