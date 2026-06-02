@@ -1,5 +1,4 @@
 <script setup>
-import CookieBanner from '../CookieBanner.vue'
 import LessonMaterials from '../LessonMaterials.vue'
 </script>
 
@@ -7,7 +6,6 @@ import LessonMaterials from '../LessonMaterials.vue'
   <div class="preview-bg">
     <LessonMaterials />
   </div>
-  <CookieBanner />
 </template>
 
 <style scoped>
